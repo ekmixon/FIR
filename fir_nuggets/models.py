@@ -21,7 +21,7 @@ class Nugget(models.Model):
     found_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return u"Nugget: {} in {} ({})".format(self.source, self.incident, self.interpretation)
+        return f"Nugget: {self.source} in {self.incident} ({self.interpretation})"
 
 
 class NuggetForm(forms.ModelForm):

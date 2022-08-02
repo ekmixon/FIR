@@ -117,11 +117,7 @@ def get_template(request, incident_id, artifact_id, authorization_target=None):
 
 
 def get_best_record(artifact_type, category, model, filters={}):
-    if filters:
-        collection = model.objects.filter(**filters)
-    else:
-        collection = model.objects
-
+    collection = model.objects.filter(**filters) if filters else model.objects
     q_type = Q(type=artifact_type) | Q(type='')
     q_incident_category = Q(incident_category=category) | Q(incident_category=None)
 
@@ -139,8 +135,7 @@ def get_best_record(artifact_type, category, model, filters={}):
             if score < 2:
                 result = record
                 score = 2
-        else:
-            if score == 0:
-                result = record
+        elif score == 0:
+            result = record
 
     return result

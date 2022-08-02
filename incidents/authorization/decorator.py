@@ -10,7 +10,7 @@ from incidents.authorization import AuthorizationManager
 
 def get_authorization_filter(cls, user, permission=None, fields=None):
     if not hasattr(cls, '_authorization_meta'):
-        raise Exception("No Authorization metadata for model {}".format(cls.__name__))
+        raise Exception(f"No Authorization metadata for model {cls.__name__}")
     if isinstance(permission, str):
         permission = [permission, ]
 

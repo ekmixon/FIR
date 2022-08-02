@@ -69,7 +69,7 @@ for app in INSTALLED_APPS:
     if app.startswith('fir_'):
         app_name = app[4:]
         try:
-            h = importlib.import_module('{}.hooks'.format(app))
+            h = importlib.import_module(f'{app}.hooks')
             APP_HOOKS[app_name] = h.hooks
         except ImportError:
             pass
@@ -140,8 +140,7 @@ if TF_INSTALLED:
 
             is_auth = False
             user = self.get_user()
-            device = getattr(self.get_user(), 'otp_device', None)
-            if device:
+            if device := getattr(self.get_user(), 'otp_device', None):
                 signals.user_verified.send(sender=__name__, request=self.request,
                                            user=self.get_user(), device=device)
                 redirect_to = resolve_url("dashboard:main")
@@ -168,48 +167,43 @@ if TF_INSTALLED:
 
 
 def user_login(request):
-    if request.method == "POST":
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(username=username, password=password)
-        if user is not None:
-            if not request.POST.get('remember', None):
-                request.session.set_expiry(0)
-
-            try:
-                Profile.objects.get(user=user)
-            except ObjectDoesNotExist:
-                profile = Profile()
-                profile.user = user
-                profile.hide_closed = False
-                profile.incident_number = 50
-                profile.save()
-
-            if user.is_active:
-                login(request, user)
-                log("Login success", user)
-                init_session(request)
-                return redirect('dashboard:main')
-            else:
-                log("Login attempted from locked account", user)
-                return HttpResponse('Account disabled')
-        else:
-            log("Login failed for "+username, None)
-            return render(request, 'incidents/login.html', {'error': 'error'})
-    else:
+    if request.method != "POST":
         return render(request, 'incidents/login.html')
+    username = request.POST['username']
+    password = request.POST['password']
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        if not request.POST.get('remember', None):
+            request.session.set_expiry(0)
+
+        try:
+            Profile.objects.get(user=user)
+        except ObjectDoesNotExist:
+            profile = Profile()
+            profile.user = user
+            profile.hide_closed = False
+            profile.incident_number = 50
+            profile.save()
+
+        if user.is_active:
+            login(request, user)
+            log("Login success", user)
+            init_session(request)
+            return redirect('dashboard:main')
+        else:
+            log("Login attempted from locked account", user)
+            return HttpResponse('Account disabled')
+    else:
+        log(f"Login failed for {username}", None)
+        return render(request, 'incidents/login.html', {'error': 'error'})
 
 
 def user_logout(request):
     logout(request)
     request.session.flush()
-    if TF_INSTALLED:
-        return redirect('two_factor:login')
-    else:
-        return redirect('login')
+    return redirect('two_factor:login') if TF_INSTALLED else redirect('login')
 
 def init_session(request):
-    pass
     # Put all the incident templates in the session
     request.session['incident_templates'] = list(IncidentTemplate.objects.exclude(name='default').values('name'))
     request.session['has_incident_templates'] = len(request.session['incident_templates']) > 0
@@ -436,18 +430,22 @@ def edit_incident(request, incident_id, authorization_target=None):
 @fir_auth_required
 @authorization_required('incidents.handle_incidents', Incident, view_arg='incident_id')
 def delete_incident(request, incident_id, authorization_target=None):
-    if request.method == "POST":
-        if authorization_target is None:
-            i = get_object_or_404(
-                Incident.authorization.for_user(request.user, 'incidents.handle_incidents'),
-                pk=incident_id)
-        else:
-            i = authorization_target
-        msg = "Incident '%s' deleted." % i.subject
-        i.delete()
-        return HttpResponse(msg)
-    else:
+    if request.method != "POST":
         return redirect("incidents:index")
+    i = (
+        get_object_or_404(
+            Incident.authorization.for_user(
+                request.user, 'incidents.handle_incidents'
+            ),
+            pk=incident_id,
+        )
+        if authorization_target is None
+        else authorization_target
+    )
+
+    msg = "Incident '%s' deleted." % i.subject
+    i.delete()
+    return HttpResponse(msg)
 
 
 @fir_auth_required
@@ -532,12 +530,11 @@ def edit_comment(request, incident_id, comment_id):
     c = get_object_or_404(Comments, pk=comment_id, incident_id=incident_id)
     i = c.incident
     incident_handler = False
-    if not request.user.has_perm('incidents.handle_incidents', obj=i):
-        if c.opened_by != request.user:
-            raise PermissionDenied()
-    else:
+    if request.user.has_perm('incidents.handle_incidents', obj=i):
         incident_handler = True
 
+    elif c.opened_by != request.user:
+        raise PermissionDenied()
     if request.method == "POST":
         form = CommentForm(request.POST, instance=c)
         if not incident_handler:
@@ -545,8 +542,12 @@ def edit_comment(request, incident_id, comment_id):
                 name__in=['Closed', 'Opened', 'Blocked'])
         if form.is_valid():
             form.save()
-            log("Edited comment %s" % (form.cleaned_data['comment'][:10] + "..."), request.user,
-                incident=Incident.objects.get(id=incident_id))
+            log(
+                f"""Edited comment {form.cleaned_data['comment'][:10] + "..."}""",
+                request.user,
+                incident=Incident.objects.get(id=incident_id),
+            )
+
             return redirect("incidents:details", incident_id=c.incident_id)
     else:
         form = CommentForm(instance=c)
@@ -561,15 +562,16 @@ def edit_comment(request, incident_id, comment_id):
 def delete_comment(request, incident_id, comment_id):
     c = get_object_or_404(Comments, pk=comment_id, incident_id=incident_id)
     i = c.incident
-    if not request.user.has_perm('incidents.handle_incidents', obj=i) and not c.opened_by == request.user:
+    if (
+        not request.user.has_perm('incidents.handle_incidents', obj=i)
+        and c.opened_by != request.user
+    ):
         raise PermissionDenied()
     if request.method == "POST":
-        msg = "Comment '%s' deleted." % (c.comment[:20] + "...")
+        msg = "Comment '%s' deleted." % f"{c.comment[:20]}..."
         c.delete()
         log(msg, request.user, incident=Incident.objects.get(id=incident_id))
-        return redirect('incidents:details', incident_id=c.incident_id)
-    else:
-        return redirect('incidents:details', incident_id=c.incident_id)
+    return redirect('incidents:details', incident_id=c.incident_id)
 
 
 @fir_auth_required
@@ -592,15 +594,21 @@ def update_comment(request, comment_id):
 
             c = comment_form.save()
 
-            log("Comment edited: %s" % (comment_form.cleaned_data['comment'][:20] + "..."), request.user,
-                incident=c.incident)
+            log(
+                f"""Comment edited: {comment_form.cleaned_data['comment'][:20] + "..."}""",
+                request.user,
+                incident=c.incident,
+            )
 
-            if c.action.name in ['Closed', 'Opened', 'Blocked']:
-                if c.action.name[0] != c.incident.status:
-                    previous_status = c.incident.status
-                    c.incident.status = c.action.name[0]
-                    c.incident.save()
-                    model_status_changed.send(sender=Incident, instance=c.incident, previous_status=previous_status)
+
+            if (
+                c.action.name in ['Closed', 'Opened', 'Blocked']
+                and c.action.name[0] != c.incident.status
+            ):
+                previous_status = c.incident.status
+                c.incident.status = c.action.name[0]
+                c.incident.save()
+                model_status_changed.send(sender=Incident, instance=c.incident, previous_status=previous_status)
 
             i.refresh_artifacts(c.comment)
 
@@ -642,16 +650,10 @@ def get_query(query_string, search_fields):
     for term in terms:
         or_query = None  # Query to search for a given term in each field
         for field_name in search_fields:
-            q = Q(**{"%s__icontains" % field_name: term})
+            q = Q(**{f"{field_name}__icontains": term})
 
-            if or_query is None:
-                or_query = q
-            else:
-                or_query = or_query | q
-        if query is None:
-            query = or_query
-        else:
-            query = query & or_query
+            or_query = q if or_query is None else or_query | q
+        query = or_query if query is None else query & or_query
     return query
 
 

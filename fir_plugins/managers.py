@@ -8,9 +8,9 @@ class LinkableManager(BaseManager):
         self.permission = permission
 
     def get_querysets(self, linked_type=None):
-        qss = list()
+        qss = []
         if not linked_type:
-            for link_name, linked_model in getattr(self.linkable, "_LINKS", dict()).items():
+            for link_name, linked_model in getattr(self.linkable, "_LINKS", {}).items():
                 if hasattr(self.linkable, link_name):
                     if hasattr(linked_model.model, 'authorization') and self.user is not None:
                         qss.append(
@@ -21,7 +21,7 @@ class LinkableManager(BaseManager):
         else:
             if not isinstance(linked_type, (list, tuple)):
                 linked_type = [linked_type,]
-            for link_name, linked_model in getattr(self.linkable, "_LINKS", dict()).items():
+            for link_name, linked_model in getattr(self.linkable, "_LINKS", {}).items():
                 if linked_type.count(linked_model.model) > 0:
                     if hasattr(linked_model.model, 'authorization') and self.user is not None:
                         qss.append(
@@ -35,14 +35,14 @@ class LinkableManager(BaseManager):
         return self.get_querysets(linked_type=linked_type)
 
     def group(self):
-        result = dict()
+        result = {}
 
         class Group(object):
             def __init__(self, linked, objects):
                 self.model = linked
                 self.objects = objects
 
-        for link_name, linked_model in getattr(self.linkable, "_LINKS", dict()).items():
+        for link_name, linked_model in getattr(self.linkable, "_LINKS", {}).items():
             if hasattr(self.linkable, link_name):
                 if hasattr(linked_model.model, 'authorization') and self.user is not None:
                     objects = linked_model.model.authorization.for_user(self.user, self.permission).filter(
@@ -73,33 +73,33 @@ class LinkableManager(BaseManager):
     def add(self, *objs):
         objs = list(objs)
 
-        for link_name, linked_model in getattr(self.linkable, "_LINKS", dict()).items():
+        for link_name, linked_model in getattr(self.linkable, "_LINKS", {}).items():
             for instance in objs:
                 if isinstance(instance, linked_model.model):
                     getattr(self.linkable, link_name).add(instance)
                     objs.remove(instance)
-                    if len(objs) == 0:
+                    if not objs:
                         return self.linkable
-        if len(objs) > 0:
+        if objs:
             raise self.linkable.LinkedModelDoesNotExist()
         return self.linkable
 
     def remove(self, *objs, **kwargs):
         objs = list(objs)
 
-        for link_name, linked_model in getattr(self.linkable, "_LINKS", dict()).items():
+        for link_name, linked_model in getattr(self.linkable, "_LINKS", {}).items():
             for instance in objs:
                 if isinstance(instance, linked_model.model):
                     getattr(self.linkable, link_name).remove(instance, **kwargs)
                     objs.remove(instance)
-                    if len(objs) == 0:
+                    if not objs:
                         return self.linkable
-        if len(objs) > 0:
+        if objs:
             raise self.linkable.LinkedModelDoesNotExist()
         return self.linkable
 
     def clear(self, **kwargs):
-        for link_name in getattr(self.linkable, "_LINKS", dict()).keys():
+        for link_name in getattr(self.linkable, "_LINKS", {}):
             getattr(self.linkable, link_name).clear(**kwargs)
         return self.linkable
 
@@ -107,7 +107,7 @@ class LinkableManager(BaseManager):
         linked_type = kwargs.pop("linked_type", None)
         assert linked_type, 'get_or_create() must be passed the linked model type'
         assert len(kwargs), 'get_or_create() must be passed at least one keyword argument'
-        for link_name, linked_model in getattr(self.linkable, "_LINKS", dict()).items():
+        for link_name, linked_model in getattr(self.linkable, "_LINKS", {}).items():
             if linked_model.model == linked_type:
                 return getattr(self.linkable, link_name).get_or_create(**kwargs)
         raise self.linkable.LinkedModelDoesNotExist()
@@ -116,7 +116,7 @@ class LinkableManager(BaseManager):
         linked_type = kwargs.pop("linked_type", None)
         assert linked_type, 'get_or_create() must be passed the linked model type'
         assert len(kwargs), 'get_or_create() must be passed at least one keyword argument'
-        for link_name, linked_model in getattr(self.linkable, "_LINKS", dict()).items():
+        for link_name, linked_model in getattr(self.linkable, "_LINKS", {}).items():
             if linked_model.model == linked_type:
                 return getattr(self.linkable, link_name).update_or_create(**kwargs)
         raise self.linkable.LinkedModelDoesNotExist()
@@ -125,7 +125,7 @@ class LinkableManager(BaseManager):
         linked_type = kwargs.pop("linked_type", None)
         assert linked_type, 'get_or_create() must be passed the linked model type'
         assert len(kwargs), 'get_or_create() must be passed at least one keyword argument'
-        for link_name, linked_model in getattr(self.linkable, "_LINKS", dict()).items():
+        for link_name, linked_model in getattr(self.linkable, "_LINKS", {}).items():
             if linked_model.model == linked_type:
                 return getattr(self.linkable, link_name).create(**kwargs)
         raise self.linkable.LinkedModelDoesNotExist()

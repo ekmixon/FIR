@@ -94,9 +94,11 @@ if not settings.NOTIFICATIONS_MERGE_INCIDENTS_AND_EVENTS:
 @notification_event('incident:created', model_created, Incident, verbose_name=_('Incident created'),
                     section=_('Incident'))
 def incident_created(sender, instance, **kwargs):
-    if not instance.is_incident:
-        return None, None
-    return instance, instance.concerned_business_lines
+    return (
+        (instance, instance.concerned_business_lines)
+        if instance.is_incident
+        else (None, None)
+    )
 
 
 @notification_event('incident:updated', model_updated, Incident, verbose_name=_('Incident updated'),

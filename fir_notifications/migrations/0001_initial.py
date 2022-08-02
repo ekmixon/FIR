@@ -7,6 +7,8 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+
+
 class Migration(migrations.Migration):
 
     initial = True
@@ -20,10 +22,29 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='MethodConfiguration',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('key', models.CharField(max_length=60, verbose_name='method')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
+                (
+                    'key',
+                    models.CharField(max_length=60, verbose_name='method'),
+                ),
                 ('value', models.TextField(verbose_name='configuration')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='method_preferences', to=settings.AUTH_USER_MODEL, verbose_name='user')),
+                (
+                    'user',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='method_preferences',
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name='user',
+                    ),
+                ),
             ],
             options={
                 'verbose_name': 'method configuration',
@@ -33,12 +54,51 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='NotificationTemplate',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('event', models.CharField(max_length=60, verbose_name='event')),
-                ('subject', models.CharField(blank=True, default='', max_length=200, verbose_name='subject')),
-                ('short_description', models.TextField(blank=True, default='', verbose_name='short description')),
-                ('description', models.TextField(blank=True, default='', verbose_name='description')),
-                ('business_lines', models.ManyToManyField(blank=True, related_name='_notificationtemplate_business_lines_+', to='incidents.BusinessLine', verbose_name='business line')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
+                (
+                    'event',
+                    models.CharField(max_length=60, verbose_name='event'),
+                ),
+                (
+                    'subject',
+                    models.CharField(
+                        blank=True,
+                        default='',
+                        max_length=200,
+                        verbose_name='subject',
+                    ),
+                ),
+                (
+                    'short_description',
+                    models.TextField(
+                        blank=True,
+                        default='',
+                        verbose_name='short description',
+                    ),
+                ),
+                (
+                    'description',
+                    models.TextField(
+                        blank=True, default='', verbose_name='description'
+                    ),
+                ),
+                (
+                    'business_lines',
+                    models.ManyToManyField(
+                        blank=True,
+                        related_name='_notificationtemplate_business_lines_+',
+                        to='incidents.BusinessLine',
+                        verbose_name='business line',
+                    ),
+                ),
             ],
             options={
                 'verbose_name': 'notification template',
@@ -46,11 +106,9 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.AlterUniqueTogether(
-            name='methodconfiguration',
-            unique_together=set([('user', 'key')]),
+            name='methodconfiguration', unique_together={('user', 'key')}
         ),
         migrations.AlterIndexTogether(
-            name='methodconfiguration',
-            index_together=set([('user', 'key')]),
+            name='methodconfiguration', index_together={('user', 'key')}
         ),
     ]

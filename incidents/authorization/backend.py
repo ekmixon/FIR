@@ -41,9 +41,7 @@ class ObjectPermissionBackend(object):
         # check if user_obj and object are supported
         if obj is None:
             return False
-        test_func = check_support(user_obj, obj)
-        if not test_func:
+        if test_func := check_support(user_obj, obj):
+            return True if user_obj.has_perm(perm) else test_func(user_obj, perm)
+        else:
             return False
-        if user_obj.has_perm(perm):
-            return True
-        return test_func(user_obj, perm)

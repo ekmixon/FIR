@@ -28,7 +28,7 @@ class Command(BaseCommand):
         except ImportError:
             raise CommandError(u"You must install 'html2text' to migrate your data.")
         models = {}
-        if not 'app_label' in options or not len(options['app_label']):
+        if 'app_label' not in options or not len(options['app_label']):
             applications = self.models.keys()
         else:
             applications = options['app_label']

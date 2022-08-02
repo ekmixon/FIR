@@ -63,13 +63,15 @@ class Notifications(object):
             verbose_name = name
         self.events[name] = RegisteredEvent(name, model, verbose_name=verbose_name, section=section)
 
-        signal.connect(callback, sender=model, dispatch_uid="fir_notifications.{}".format(name))
+        signal.connect(
+            callback, sender=model, dispatch_uid=f"fir_notifications.{name}"
+        )
 
     def get_event_choices(self):
         results = OrderedDict()
         for obj in self.events.values():
             if obj.section not in results:
-                results[obj.section] = list()
+                results[obj.section] = []
             results[obj.section].append((obj.name, obj.verbose_name))
         return [(section, sorted(choices)) for section, choices in results.items()]
 

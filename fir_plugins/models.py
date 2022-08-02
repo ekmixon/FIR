@@ -8,7 +8,7 @@ from fir_plugins.managers import LinkableManager
 def get_plural(model):
     if issubclass(model, models.base.Model):
         model = model.__name__
-    return model.lower() + 's'
+    return f'{model.lower()}s'
 
 
 def get_singular(model):
@@ -55,9 +55,7 @@ class ManyLinkableModel(models.Model):
         return self._relation_manager
 
     def relations_for_user(self, user):
-        if user is None:
-            return self.relations
-        return LinkableManager(self, user=user)
+        return self.relations if user is None else LinkableManager(self, user=user)
 
     @classmethod
     def link_to(cls, linked_model, link_name=None, verbose_name=None, verbose_name_plural=None):
@@ -68,6 +66,7 @@ class ManyLinkableModel(models.Model):
 
 
 def create_link(linkable_model, linked_model, linkable_link_name=None, verbose_name=None, verbose_name_plural=None):
+
 
     class LinkedModel(object):
         def __init__(self, model, link_name=None, verbose_name=None, verbose_name_plural=None, reverse_link_name=None):
@@ -96,7 +95,7 @@ def create_link(linkable_model, linked_model, linkable_link_name=None, verbose_n
         field.contribute_to_class(linked_model, linked_link_name)
 
     elif issubclass(linkable_model, OneLinkableModel):
-        linked_link_name = get_singular(linkable_model)+"_set"
+        linked_link_name = f"{get_singular(linkable_model)}_set"
         field = GenericRelation(linkable_model, related_query_name=linkable_link_name)
         setattr(linked_model, linked_link_name, field)
         field.contribute_to_class(linked_model, linked_link_name)
@@ -105,7 +104,7 @@ def create_link(linkable_model, linked_model, linkable_link_name=None, verbose_n
             fset=lambda x, y: linkable_model.set_related(x, y)))
 
     if not hasattr(linkable_model, "_LINKS") or linkable_model._LINKS is None:
-        setattr(linkable_model, "_LINKS", dict())
+        setattr(linkable_model, "_LINKS", {})
     linkable_model._LINKS[linkable_link_name] = LinkedModel(
                                 linked_model, link_name=linkable_link_name,
                                 verbose_name=verbose_name,

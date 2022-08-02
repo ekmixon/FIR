@@ -19,12 +19,12 @@ class Artifact(ManyLinkableModel):
     def __str__(self):
         display = self.value
         if self.relations.count() > 1:
-            display += " (%s)" % self.relations.count()
+            display += f" ({self.relations.count()})"
         return display
 
 
 def upload_path(instance, filename):
-    return "%s_%s/%s" % (instance.content_type.model, instance.object_id, filename)
+    return f"{instance.content_type.model}_{instance.object_id}/{filename}"
 
 
 class File(OneLinkableModel):
@@ -41,7 +41,7 @@ class File(OneLinkableModel):
         return os.path.basename(self.file.name)
 
     def get_hashes(self):
-        hashes = dict((k, None) for k in ['md5', 'sha1', 'sha256'])
+        hashes = {k: None for k in ['md5', 'sha1', 'sha256']}
         content = self.file.read()
         for algo in hashes:
             m = hashlib.new(algo)

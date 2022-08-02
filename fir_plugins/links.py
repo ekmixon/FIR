@@ -15,9 +15,7 @@ class LinkUrl(object):
 
     def __call__(self, match):
         path = reverse(self.url, args=match.groups())
-        if self.request is not None:
-            return self.request.build_absolute_uri(path)
-        return path
+        return path if self.request is None else self.request.build_absolute_uri(path)
 
 
 class Links(object):
@@ -53,10 +51,7 @@ class Links(object):
         self.regex_links.append((parser_regex, template))
 
     def _reverse(self, request=None):
-        patterns = []
-        for regex, url in self.reverse_links:
-            patterns.append((regex, LinkUrl(url, request)))
-        return patterns
+        return [(regex, LinkUrl(url, request)) for regex, url in self.reverse_links]
 
     def link_patterns(self, request=None):
         links = list(self.regex_links)

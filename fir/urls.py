@@ -23,10 +23,7 @@ urlpatterns = [
 if TF_INSTALLED:
     from two_factor.views import LoginView
     from two_factor.urls import urlpatterns as tf_urls
-    custom_urls = []
-    for tf_url in tf_urls[0]:
-        if tf_url.name != "login":
-            custom_urls.append(tf_url)
+    custom_urls = [tf_url for tf_url in tf_urls[0] if tf_url.name != "login"]
     custom_urls.append(url(regex=r'^account/login/$',
                            view=views.CustomLoginView.as_view(),
                            name='login',))
@@ -38,6 +35,11 @@ else:
 for app in INSTALLED_APPS:
     if app.startswith('fir_'):
         app_name = app[4:]
-        app_urls = '{}.urls'.format(app)
+        app_urls = f'{app}.urls'
         if find_loader(app_urls):
-            urlpatterns.append(url('^{}/'.format(app_name), include((app_urls, app), namespace=app_name)))
+            urlpatterns.append(
+                url(
+                    f'^{app_name}/',
+                    include((app_urls, app), namespace=app_name),
+                )
+            )

@@ -68,7 +68,7 @@ class Profile(models.Model):
     hide_closed = models.BooleanField(default=False)
 
     def __str__(self):
-        return u"Profile for user '{}'".format(self.user)
+        return f"Profile for user '{self.user}'"
 
 
 # Audit trail ================================================================
@@ -83,11 +83,12 @@ class Log(models.Model):
 
     def __str__(self):
         if self.incident:
-            return u"[%s] %s %s (%s)" % (self.when, self.what, self.incident, self.who)
+            return f"[{self.when}] {self.what} {self.incident} ({self.who})"
         elif self.comment:
-            return u"[%s] %s comment on %s (%s)" % (self.when, self.what, self.comment.incident, self.who)
+            return f"[{self.when}] {self.what} comment on {self.comment.incident} ({self.who})"
+
         else:
-            return u"[%s] %s (%s)" % (self.when, self.what, self.who)
+            return f"[{self.when}] {self.what} ({self.who})"
 
 
 class LabelGroup(models.Model):
@@ -102,7 +103,7 @@ class Label(models.Model):
     group = models.ForeignKey(LabelGroup, on_delete=models.CASCADE)
 
     def __str__(self):
-        return "%s" % (self.name)
+        return f"{self.name}"
 
 
 class BusinessLine(MP_Node, AuthorizationModelMixin):
@@ -147,9 +148,10 @@ class BaleCategory(models.Model):
 
     def __str__(self):
         if self.parent_category:
-            return "(%s > %s) %s" % (self.parent_category.category_number, self.category_number, self.name)
+            return f"({self.parent_category.category_number} > {self.category_number}) {self.name}"
+
         else:
-            return "(%s) %s" % (self.category_number, self.name)
+            return f"({self.category_number}) {self.name}"
 
 
 class IncidentCategory(models.Model):
@@ -216,7 +218,7 @@ class Incident(FIRModel, models.Model):
     def get_last_action(self):
         c = self.comments_set.order_by('-date')[0]
 
-        action = "%s (%s)" % (c.action, c.date.strftime("%Y %d %b %H:%M:%S"))
+        action = f'{c.action} ({c.date.strftime("%Y %d %b %H:%M:%S")})'
 
         return action
 
@@ -232,9 +234,7 @@ class Incident(FIRModel, models.Model):
         return ", ".join([b.name for b in self.concerned_business_lines.all()])
 
     def refresh_main_business_lines(self):
-        mainbls = set()
-        for bl in self.concerned_business_lines.all():
-            mainbls.add(bl.get_root())
+        mainbls = {bl.get_root() for bl in self.concerned_business_lines.all()}
         self.main_business_lines.set(list(mainbls))
 
     def refresh_artifacts(self, data=""):
@@ -249,9 +249,7 @@ class Incident(FIRModel, models.Model):
 
         artifact_list = []
         for key in found_artifacts:
-            for a in found_artifacts[key]:
-                artifact_list.append((key, a))
-
+            artifact_list.extend((key, a) for a in found_artifacts[key])
         db_artifacts = Artifact.objects.filter(value__in=[a[1] for a in artifact_list])
 
         exist = []
@@ -292,7 +290,7 @@ class Comments(models.Model):
         verbose_name_plural = 'comments'
 
     def __str__(self):
-        return u"Comment for incident %s" % self.incident.id
+        return f"Comment for incident {self.incident.id}"
 
     @classmethod
     def create_diff_comment(cls, incident, data, user):
@@ -347,7 +345,7 @@ class Attribute(models.Model):
     incident = models.ForeignKey(Incident, on_delete=models.CASCADE)
 
     def __str__(self):
-        return "%s: %s" % (self.name, self.value)
+        return f"{self.name}: {self.value}"
 
 
 class ValidAttribute(models.Model):
@@ -409,9 +407,5 @@ def comment_new_incident(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Incident)
 def log_new_incident(sender, instance, created, **kwargs):
-    if created:
-        what = 'Created incident'
-    else:
-        what = 'Edit incident'
-
+    what = 'Created incident' if created else 'Edit incident'
     Log.objects.create(who=instance.opened_by, what=what, incident=instance)

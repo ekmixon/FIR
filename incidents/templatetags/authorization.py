@@ -8,9 +8,9 @@ register = template.Library()
 
 @register.simple_tag(takes_context=True)
 def has_perm(context, *permissions, **kwargs):
-    obj = kwargs.get('obj', None)
+    obj = kwargs.get('obj')
     if obj is None:
-        obj = kwargs.get('model', None)
+        obj = kwargs.get('model')
         if isinstance(obj, ModelForm):
             obj = obj._meta.model
         elif isinstance(obj, str):

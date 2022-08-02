@@ -3,11 +3,10 @@ import re
 from django.db.models import Q
 
 def keyword_filter(q, query_string):
-    nugget = re.search("nugget:(\S+)", query_string)
-    if nugget:
-        nugget = nugget.group(1)
+    if nugget := re.search("nugget:(\S+)", query_string):
+        nugget = nugget[1]
         q = q & Q(nugget__source__icontains=nugget) | Q(nugget__raw_data__icontains=nugget) | Q(nugget__interpretation__icontains=nugget)
-        query_string = query_string.replace('nugget:' + nugget, '')
+        query_string = query_string.replace(f'nugget:{nugget}', '')
     return q, query_string
 
 

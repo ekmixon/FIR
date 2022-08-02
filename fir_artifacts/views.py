@@ -15,7 +15,9 @@ from fir_artifacts.models import Artifact
 def artifacts_correlations(request, artifact_id):
     a = get_object_or_404(Artifact, pk=artifact_id)
     correlations = a.relations_for_user(request.user).group()
-    if all([not link_type.objects.exists() for link_type in correlations.values()]):
+    if all(
+        not link_type.objects.exists() for link_type in correlations.values()
+    ):
         raise PermissionDenied
     return render(request, 'fir_artifacts/correlation_list.html', {'correlations': correlations,
                                                                    'artifact': a,
@@ -37,7 +39,7 @@ def detach_artifact(request, artifact_id, relation_name, relation_id):
     a.relations.remove(related)
     if a.relations.count() == 0:
         a.delete()
-    return redirect('%s:details' % relation_name, relation_id)
+    return redirect(f'{relation_name}:details', relation_id)
 
 
 @login_required

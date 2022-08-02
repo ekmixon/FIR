@@ -32,10 +32,10 @@ class NotificationMethod(object):
             preference = NotificationPreference.objects.get(event=event, method=self.name, user=user)
         except NotificationPreference.DoesNotExist:
             return False
-        for bl in preference.business_lines.all():
-            if any([bl.path.startswith(path) for path in paths]):
-                return True
-        return False
+        return any(
+            any(bl.path.startswith(path) for path in paths)
+            for bl in preference.business_lines.all()
+        )
 
     @staticmethod
     def prepare(template_object, instance, extra_context=None):

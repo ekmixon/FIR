@@ -15,7 +15,7 @@ class AuthorizationModelMixin(models.Model):
 
     @classmethod
     def _get_permission_ids(cls, permission_codes):
-        permissions = list()
+        permissions = []
         for perm in permission_codes:
             perm_id = cls._permissions_cache.get(perm, None)
             if perm_id is None:

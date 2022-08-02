@@ -38,7 +38,7 @@ class NotificationTemplateForm(forms.ModelForm):
 class NotificationPreferenceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
-        instance = kwargs.get('instance', None)
+        instance = kwargs.get('instance')
         if self.user is None and instance is not None:
             self.user = instance.user
         if instance is None and kwargs.get('data', None) is not None:

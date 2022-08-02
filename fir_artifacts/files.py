@@ -63,7 +63,7 @@ def do_download(request, file_id):
     wrapper = FileWrapper(f.file)
     content_type = mimetypes.guess_type(f.file.name)
     response = HttpResponse(wrapper, content_type=content_type)
-    response['Content-Disposition'] = 'attachment; filename=%s' % (f.getfilename())
+    response['Content-Disposition'] = f'attachment; filename={f.getfilename()}'
     response['Content-Length'] = os.path.getsize(str(f.file.file))
 
     return response
@@ -87,7 +87,10 @@ def do_download_archive(request, content_type, object_id):
     wrapper = FileWrapper(temp)
 
     response = HttpResponse(wrapper, content_type='application/zip')
-    response['Content-Disposition'] = 'attachment; filename=archive_%s_%s.zip' % (object_type.model, object_id)
+    response[
+        'Content-Disposition'
+    ] = f'attachment; filename=archive_{object_type.model}_{object_id}.zip'
+
     response['Content-Length'] = file_size
     return response
 

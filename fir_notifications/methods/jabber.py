@@ -51,12 +51,20 @@ class XmppMethod(NotificationMethod):
         self.server_configured = True
 
     def _ensure_connection(self):
-        if not hasattr(self.client, 'Dispatcher'):
-            if self.client.connect(server=self.connection_tuple, use_srv=self.use_srv):
-                if self.client.auth(self.jid.getNode(), self.password, resource=self.jid.getResource()):
-                    return True
-            return False
-        return self.client.reconnectAndReauth()
+        return (
+            self.client.reconnectAndReauth()
+            if hasattr(self.client, 'Dispatcher')
+            else bool(
+                self.client.connect(
+                    server=self.connection_tuple, use_srv=self.use_srv
+                )
+                and self.client.auth(
+                    self.jid.getNode(),
+                    self.password,
+                    resource=self.jid.getResource(),
+                )
+            )
+        )
 
     def send(self, event, users, instance, paths):
         if not self._ensure_connection():
@@ -86,9 +94,7 @@ class XmppMethod(NotificationMethod):
 
     def _get_jid(self, user):
         config = self._get_configuration(user)
-        if 'jid' in config:
-            return xmpp.JID(config['jid'])
-        return None
+        return xmpp.JID(config['jid']) if 'jid' in config else None
 
     def configured(self, user):
         return super(XmppMethod, self).configured(user) and self._get_jid(user) is not None

@@ -31,13 +31,11 @@ def plugin_point(context, name):
 
 @register.filter
 def relation_name(obj):
-    return obj.__class__.__name__.lower()+'s'
+    return f'{obj.__class__.__name__.lower()}s'
 
 @register.filter
 def content_type(obj):
-    if not obj:
-        return False
-    return ContentType.objects.get_for_model(obj).pk
+    return ContentType.objects.get_for_model(obj).pk if obj else False
 
 
 @register.filter

@@ -82,10 +82,7 @@ def toggle_status(request, todo_id):
         raise PermissionDenied()
 
     referer = request.META.get('HTTP_REFERER', None)
-    dashboard = False
-    if ('/incidents/' not in referer) and ('/events/' not in referer):
-        dashboard = True
-
+    dashboard = '/incidents/' not in referer and '/events/' not in referer
     return render(request, 'fir_todos/single.html', {'item': todo, 'dashboard': dashboard})
 
 
@@ -138,7 +135,7 @@ def create_task(task, instance, bl=None):
 
 @receiver(model_created, sender=Incident)
 def new_event(sender, instance, **kwargs):
-    todos = dict()
+    todos = {}
 
     for bl in instance.concerned_business_lines.all():
         for template in get_todo_templates(instance.category, instance.detection, bl):

@@ -10,6 +10,6 @@ class FakeRequest(object):
                 self.base = self.base[:-1]
 
     def build_absolute_uri(self, location):
-        return "{}{}".format(self.base, location)
+        return f"{self.base}{location}"
 
 request = FakeRequest()

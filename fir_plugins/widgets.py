@@ -5,7 +5,7 @@ class MarkdownTextarea(Textarea):
     def __init__(self, attrs=None):
         default_attrs = {"class": "markdown"}
         if attrs:
-            default_attrs.update(attrs)
+            default_attrs |= attrs
         super(MarkdownTextarea, self).__init__(default_attrs)
 
     class Media:

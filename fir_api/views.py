@@ -108,7 +108,7 @@ class FileViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
         files = request.data['files']
         incident = get_object_or_404(Incident, pk=pk)
         files_added = []
-        for i, file in enumerate(files):
+        for file in files:
             file_obj = FileWrapper(io.StringIO(file['content']))
             file_obj.name = file['filename']
             description = file['description']

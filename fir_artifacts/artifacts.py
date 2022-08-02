@@ -6,7 +6,7 @@ from django.template import RequestContext
 
 register = template.Library()
 
-INSTALLED_ARTIFACTS = dict()
+INSTALLED_ARTIFACTS = {}
 
 
 def install(artifact_class):
@@ -16,7 +16,7 @@ def install(artifact_class):
 def find(data):
     from fir_artifacts.models import ArtifactBlacklistItem
 
-    result = dict()
+    result = {}
     for key in INSTALLED_ARTIFACTS:
         blacklist = ArtifactBlacklistItem.objects.filter(type=key).values_list('value', flat=True)
         values = INSTALLED_ARTIFACTS[key].find(data)
@@ -77,6 +77,7 @@ class AbstractArtifact:
         pass
 
     def __init__(self, artifacts, event, user=None):
+
         class ArtifactDisplay(object):
             def __init__(self, artifact, user):
                 self.artifact = artifact
@@ -101,10 +102,11 @@ class AbstractArtifact:
         self._artifacts = [ArtifactDisplay(artifact, user) for artifact in artifacts]
         self._event = event
 
-        self._correlated = []
-        for artifact in self._artifacts:
-            if artifact.correlation_count > 1:
-                self._correlated.append(artifact)
+        self._correlated = [
+            artifact
+            for artifact in self._artifacts
+            if artifact.correlation_count > 1
+        ]
 
     def json(self, request):
         return self.display(request, correlated=False, json=True)
@@ -120,10 +122,11 @@ class AbstractArtifact:
 
         context['event'] = self._event
 
-        if not json:
-            return template.render(context.flatten(), request)
-        else:
-            return context.flatten()
+        return (
+            context.flatten()
+            if json
+            else template.render(context.flatten(), request)
+        )
 
     def correlated_count(self):
         return len(self._correlated)

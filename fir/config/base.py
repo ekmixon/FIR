@@ -142,11 +142,11 @@ apps_file = os.path.join(BASE_DIR, 'fir', 'config', 'installed_apps.txt')
 if os.path.exists(apps_file):
     apps = list(INSTALLED_APPS)
     with open(apps_file) as f:
-        for line in f.readlines():
+        for line in f:
             line = line.strip()
             if line != "":
                 apps.append(line)
-                settings = '{}.settings'.format(line)
+                settings = f'{line}.settings'
                 if find_loader(settings):
                     globals().update(import_module(settings).__dict__)
 

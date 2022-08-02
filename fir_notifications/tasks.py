@@ -22,8 +22,11 @@ def get_perm_id():
 
 def get_templates(event, business_line=None):
     from fir_notifications.models import NotificationTemplate
-    templates = list(NotificationTemplate.objects.filter(event=event, business_lines=business_line).order_by('id'))
-    return templates
+    return list(
+        NotificationTemplate.objects.filter(
+            event=event, business_lines=business_line
+        ).order_by('id')
+    )
 
 
 def get_user_templates(event, business_lines):
@@ -37,10 +40,9 @@ def get_user_templates(event, business_lines):
     depth = 1
     all_templates = {}
     while len(business_lines):
-        for lower in business_lines.keys():
+        for lower, path in business_lines.items():
             if lower not in all_templates:
                 all_templates[lower] = []
-            path = business_lines[lower]
             if len(path) > depth:
                 current_bl = path[depth-1]
                 templates = get_templates(event, current_bl)

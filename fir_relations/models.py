@@ -30,9 +30,12 @@ class TemplateRelation(object):
                 self.can_view = True
             else:
                 return
-        if hasattr(self.relation.source, 'has_perm'):
-            if self.relation.source.has_perm(self.user, 'incidents.handle_incidents'):
-                self.can_edit = True
+        if hasattr(
+            self.relation.source, 'has_perm'
+        ) and self.relation.source.has_perm(
+            self.user, 'incidents.handle_incidents'
+        ):
+            self.can_edit = True
 
 
     @property
@@ -60,9 +63,7 @@ class TemplateRelation(object):
     @property
     def object_type(self):
         if isinstance(self.object, Incident):
-            if self.object.is_incident:
-                return _('Incident')
-            return _('Event')
+            return _('Incident') if self.object.is_incident else _('Event')
         return self.object._meta.verbose_name
 
     def __str__(self):

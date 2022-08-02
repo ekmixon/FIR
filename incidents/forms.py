@@ -64,8 +64,7 @@ class IncidentForm(ModelForm):
         cleaned_data = super(IncidentForm, self).clean()
         if self.user is not None:
             business_lines = cleaned_data.get("concerned_business_lines")
-            is_incident = cleaned_data.get("is_incident")
-            if is_incident:
+            if is_incident := cleaned_data.get("is_incident"):
                 bl_ids = business_lines.values_list('id', flat=True)
                 handling_bls = BusinessLine.authorization.for_user(self.user, 'incidents.handle_incidents').filter(
                     pk__in=bl_ids).count()

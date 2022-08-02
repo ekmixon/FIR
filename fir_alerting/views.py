@@ -17,10 +17,7 @@ from fir_email.helpers import send
 def get_rec_template(query):
     template = list(RecipientTemplate.objects.filter(query))
 
-    if len(template) > 0:
-        return template[0]
-    else:
-        return None
+    return template[0] if template else None
 
 
 @login_required
@@ -59,7 +56,7 @@ def get_template(request, incident_id, template_type, bl=None, authorization_tar
     parents = list(set(i.concerned_business_lines.all()))
 
     while not rec_template and len(parents):
-        parents = list(set([b.get_parent() for b in parents if not b.is_root()]))
+        parents = list({b.get_parent() for b in parents if not b.is_root()})
         q_parents = Q(business_line__in=parents)
 
         rec_template = get_rec_template(q_parents & Q(type=template_type))
